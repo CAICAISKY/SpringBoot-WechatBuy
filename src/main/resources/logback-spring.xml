@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    日志配置的根标签，有三个属性
+    scan:是否在配置文件修改时候重新加载，默认为true
+    scanPeriod:检查配置文件是否更新的周期，默认为60秒，默认单位为毫秒
+    debug:是否打印出logback内部日志信息，实时查看logback运行状态。默认值为false
+-->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+      <!--配置键值属性，可以在本xml中通过${key}使用-->
+      <property name="LOG_HOME" value="c:/logs" />
+      <property name="appName" value="log"/>
+
+      <!--
+          配置appender规则，可配置多个
+          ch.qos.logback.core.ConsoleAppender:控制台输出
+          ch.qos.logback.core.rolling.RollingFileAppender:文件输出
+          日志输出格式
+              %d:日期时间，%thread:线程名，%-5level：从左显示5个字符宽度
+              %logger{50}:logger名字最长50个字符，否则按照句点分割, %msg:日志消息，%n:换行符
+       -->
+      <!--配置控制台输出规则-->
+      <appender name="consoleLog" class="ch.qos.logback.core.ConsoleAppender">
+          <layout class="ch.qos.logback.classic.PatternLayout">
+              <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+          </layout>
+      </appender>
+
+      <!--配置日志文件输出-->
+      <appender name="fileLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+          <!--
+              配置日志输出级别，有两种方式，可以配合使用
+              1.只输出指定级别及其更严重级别
+              <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                  <level>error</level>
+              </filter>
+              2.过滤掉不输出的级别
+              <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                  <level>ERROR</level>
+                  匹配规则可以设置为DENY(禁用)、NEUTRAL(忽略本规则，继续走下一个规则)、ACCEPT(采用本规则)
+                  <onMatch>DENY</onMatch>
+                  <onMismatch>ACCEPT</onMismatch>
+              </filter>
+          -->
+          <!--配置滚动策略，每日滚动-->
+          <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+              <!--
+                  配置日志文件命名规则
+                  %i：当文件大小超过maxFileSize时，按照%i进行文件滚动。注意！如果没有设置文件最大大小，不能设置%i否则报错
+               -->
+              <fileNamePattern>${LOG_HOME}/${appName}-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+              <!--
+                  配置日志文件的最大保存数量，超出数量就删除旧文件，包括其归档目录
+                  <MaxHistory>365</MaxHistory>
+               -->
+              <!--
+                  配置单个日志文件最大大小，超过时进行文件滚动，命名规则按照上文配置中的%i
+                  注意此处配置SizeBasedTriggeringPolicy是无法实现按文件大小进行滚动的，
+                  必须配置timeBasedFileNamingAndTriggeringPolicy
+               -->
+              <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                  <maxFileSize>100MB</maxFileSize>
+              </timeBasedFileNamingAndTriggeringPolicy>
+          </rollingPolicy>
+          <!--配置输出这里与控制台输出配置有区别，用encoder标签-->
+          <encoder>
+              <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+          </encoder>
+      </appender>
+      <!--
+        配置包/类日志输出级别，可以不配置，统一使用root
+        name:必要属性，定义包名或类名
+        level:日志级别，TRACE，DEBUG，INFO，WARN，ERROR，OFF，ALL中任何一个，并且不区分大小写。如果没有写的话就会继承离他最近的祖先的级别
+        activity: 是否使用附加方式，附加方式是指在根logger(即root)的基础上附加本logger的appender，默认是附加方式，可以设为false来使用覆盖方式
+        logger标签下可以有多个appender-ref标签，来加载appender输出规则
+        logger与root的配合使用场景例如要在控制台打印程序中的所有debugger，并且其中部分需要输出日志文件
+      -->
+      <logger name="com.wechatforbuy.LoggerTest" level="info" activity="false">
+          <appender-ref ref="fileLog"/>
+      </logger>
+      <!--配置logger根级别,只有level属性，默认为debug-->
+      <root level="">info
+          <appender-ref ref="consoleLog"/>
+      </root>
+</configuration>
